@@ -1,0 +1,35 @@
+case_id,symptom,topology_note,show_output,expected_fault,osi_layer,concept,severity
+1,PC cannot obtain IP,PC connected to access switch VLAN10,show ip dhcp pool - No DHCP pools configured,DHCP Misconfiguration,Layer 7,DHCP,High
+2,PC gets APIPA address,DHCP server on Router1,show ip dhcp binding - No bindings,DHCP Server Down,Layer 7,DHCP,High
+3,Only some hosts receive IPs,50 PCs in VLAN20,show ip dhcp pool - Leased addresses 50/50,DHCP Pool Exhausted,Layer 7,DHCP,Medium
+4,Client gets wrong subnet,DHCP on Router1,show run dhcp - network 192.168.2.0,Wrong DHCP Scope,Layer 7,DHCP,Medium
+5,Gateway ping fails after DHCP,Clients in VLAN30,show run dhcp - wrong default-router,Gateway Configuration Error,Layer 3,DHCP,High
+6,Hosts in same VLAN cannot communicate,Two PCs on Switch1,show vlan brief - port in VLAN20,Wrong VLAN Assignment,Layer 2,VLAN,High
+7,VLAN 30 devices isolated,Access switch with VLAN30 users,show vlan brief - VLAN30 not found,Missing VLAN,Layer 2,VLAN,High
+8,Inter-VLAN communication fails,Router-on-a-stick topology,show interfaces trunk - no trunking,Trunk Configuration Error,Layer 2,VLAN,High
+9,Traffic to new VLAN blocked,Switch trunk between SW1 and SW2,"show interfaces trunk - allowed VLANs 10,20",Trunk Allowed VLAN Error,Layer 2,VLAN,Medium
+10,Switch ports inactive,Department VLAN40,show vlan brief - VLAN40 suspended,VLAN Disabled,Layer 2,VLAN,Medium
+11,PC gets IP but cannot reach server,PC VLAN30 Server VLAN10,show ip route - missing 192.168.30.0 network,Missing Route,Layer 3,Routing,High
+12,Remote network unreachable,Two routers connected serially,show ip route - wrong next hop,Static Route Misconfiguration,Layer 3,Routing,High
+13,Packets looping between routers,Three-router topology,traceroute shows repeating hops,Routing Loop,Layer 3,Routing,High
+14,Only local network reachable,Branch router,show ip route - gateway of last resort not set,Missing Default Route,Layer 3,Routing,Medium
+15,OSPF neighbors not forming,R1-R2 OSPF,show ip ospf neighbor - no neighbors,OSPF Configuration Error,Layer 3,Routing,Medium
+16,Website unreachable by name,Client and DNS server,ipconfig/all - DNS server blank,DNS Configuration Error,Layer 7,DNS,High
+17,DNS queries timeout,Enterprise DNS server,nslookup timeout,DNS Service Failure,Layer 7,DNS,High
+18,Wrong website opens,Web and DNS servers,nslookup returns wrong IP,Incorrect DNS Entry,Layer 7,DNS,Medium
+19,Some domains resolve,Multiple DNS zones,show dns statistics - zone load errors,DNS Zone Error,Layer 7,DNS,Medium
+20,Internal names fail,DNS forwarding enabled,show run - wrong forwarder IP,DNS Forwarder Error,Layer 7,DNS,Medium
+21,Server inaccessible from branch,ACL on edge router,show access-lists deny ip any host,ACL Blocking Traffic,Layer 4,ACL,High
+22,Only HTTP blocked,Web server network,show access-lists deny tcp eq 80,Incorrect ACL Rule,Layer 4,ACL,Medium
+23,All traffic blocked,Router inbound ACL,show access-lists implicit deny,ACL Implicit Deny,Layer 4,ACL,High
+24,Ping blocked unexpectedly,WAN edge router,show access-lists deny icmp,ACL ICMP Restriction,Layer 4,ACL,Low
+25,Internet access unavailable,Inside and outside interfaces,show ip nat statistics - translations 0,Missing NAT,Layer 3,NAT,High
+26,Only one host accesses internet,PAT configured,show run - wrong overload interface,PAT Configuration Error,Layer 3,NAT,High
+27,External users cannot access server,Public web server,show ip nat translations - no static entry,Missing Static NAT,Layer 3,NAT,Medium
+28,Translation table empty,NAT ACL configured,ACL does not match subnet,NAT ACL Error,Layer 3,NAT,Medium
+29,Guest Wi‑Fi cannot connect,Wireless LAN with WPA2,Client authentication failed,Wireless Authentication Error,Layer 2,Wireless,Medium
+30,Guest Wi‑Fi reaches internal servers,Guest and internal VLANs,No guest isolation,Wireless Security Misconfiguration,Layer 2,Wireless,High
+31,PC cannot reach default gateway,Single VLAN network,ping 192.168.1.1 failed,Gateway Misconfiguration,Layer 3,Gateway,High
+32,Router interfaces show down,Two-router topology,show ip interface brief - administratively down,Interface Shutdown,Layer 1,Interface,High
+33,Hosts cannot access internet after NAT setup,Edge router with ISP connection,show ip nat statistics - outside interface missing,NAT Interface Misconfiguration,Layer 3,NAT,High
+34,PC can ping gateway but not remote network,Multi-router topology,show ip route - destination network missing,Missing Route,Layer 3,Routing,High

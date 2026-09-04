@@ -1,0 +1,32 @@
+{
+    "1": {
+        "status": "Edited",
+        "reviewer_notes": "AI missed configuring the DHCP excluded address list in the fix steps to prevent assigning IPs that are already configured statically on servers.",
+        "corrected_fix_steps": "Configure the DHCP pool for the subnet and exclude static IPs:\n1. Router(config)# ip dhcp excluded-address 192.168.10.1 192.168.10.10\n2. Router(config)# ip dhcp pool VLAN10\n3. Router(dhcp-config)# network 192.168.10.0 255.255.255.0\n4. Router(dhcp-config)# default-router 192.168.10.1\n5. Router(dhcp-config)# dns-server 8.8.8.8"
+    },
+    "5": {
+        "status": "Edited",
+        "reviewer_notes": "AI proposed default-router IP that matches the client IP rather than the subinterface IP. Corrected the gateway default-router IP to 192.168.30.1.",
+        "corrected_fix_steps": "Modify the default-router IP address in the DHCP pool configuration to match the router interface IP:\n1. Router(config)# ip dhcp pool VLAN30\n2. Router(dhcp-config)# default-router 192.168.30.1"
+    },
+    "12": {
+        "status": "Edited",
+        "reviewer_notes": "AI suggested next-hop address (192.168.1.2) which is in the wrong VLAN. Corrected to the direct serial interface peer IP 192.168.12.2.",
+        "corrected_fix_steps": "Remove the incorrect static route and configure the correct next-hop address:\n1. Router(config)# no ip route 10.0.0.0 255.255.255.0 192.168.1.5\n2. Router(config)# ip route 10.0.0.0 255.255.255.0 192.168.12.2"
+    },
+    "20": {
+        "status": "Edited",
+        "reviewer_notes": "AI suggested 8.8.8.8 directly. While functional, enterprise policy dictates forwarding to internal DNS relay at 10.0.0.1. Corrected IP.",
+        "corrected_fix_steps": "Correct the forwarder target IP address configuration according to company guidelines:\n1. Router(config)# no ip dns server forwarder 10.0.0.99\n2. Router(config)# ip dns server forwarder 10.0.0.1"
+    },
+    "26": {
+        "status": "Edited",
+        "reviewer_notes": "AI recommended overload command on gig0/1, but the branch router uses dialer interface dialer1 for WAN connection. Corrected interface name.",
+        "corrected_fix_steps": "Correct the NAT overload statement to bind to the active WAN dialer interface:\n1. Router(config)# no ip nat inside source list 1 interface serial0/0/0 overload\n2. Router(config)# ip nat inside source list 1 interface dialer1 overload"
+    },
+    "2": {
+        "status": "Accepted",
+        "reviewer_notes": "",
+        "corrected_fix_steps": "Enable the DHCP server service and verify interface connectivity:\n1. Router1(config)# service dhcp\n2. Router1(config)# interface gig0/0\n3. Router1(config-if)# no shutdown"
+    }
+}

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetSage AI - Network Troubleshooting Dashboard</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">🌐</span>
+                <div class="logo-text">
+                    <h1>NetSage AI</h1>
+                    <p>Network Troubleshooting Helper & Human Review Pipeline</p>
+                </div>
+            </div>
+            <nav class="app-nav">
+                <button class="nav-btn active" data-tab="overview">Dashboard Overview</button>
+                <button class="nav-btn" data-tab="explorer">Diagnostics Explorer</button>
+                <button class="nav-btn" data-tab="responsible-log">Responsible AI Log</button>
+            </nav>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-content">
+            <!-- TAB 1: OVERVIEW -->
+            <section id="tab-overview" class="tab-pane active">
+                <!-- Summary Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Total Lab Cases</span>
+                        <span id="metric-total-cases" class="metric-value">30</span>
+                        <span class="metric-trend">Network Dataset</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Human Reviewed</span>
+                        <span id="metric-reviewed" class="metric-value">5 / 30</span>
+                        <span class="metric-trend highlight">Human-in-the-Loop</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">AI Accuracy / Agreement</span>
+                        <span id="metric-agreement" class="metric-value">83.3%</span>
+                        <span class="metric-trend positive">Accept Rate (no changes)</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Rules Triggered</span>
+                        <span id="metric-rules" class="metric-value">0</span>
+                        <span class="metric-trend warn">Deterministic Checks</span>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3>Issue Distribution by Domain</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="conceptChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Review Decision Status</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="reviewChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Cases by Severity Level</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="severityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: EXPLORER -->
+            <section id="tab-explorer" class="tab-pane">
+                <div class="explorer-layout">
+                    <!-- Case List Sidebar -->
+                    <aside class="case-sidebar">
+                        <div class="sidebar-header">
+                            <h3>Troubleshooting Cases</h3>
+                            <input type="text" id="case-search" placeholder="Search cases or symptoms...">
+                        </div>
+                        <ul id="case-list" class="case-list-items">
+                            <!-- Populated dynamically via JS -->
+                        </ul>
+                    </aside>
+
+                    <!-- Main Diagnostic Panel -->
+                    <article class="case-details">
+                        <div id="no-case-selected" class="empty-state">
+                            <span class="empty-icon">🔍</span>
+                            <h3>No Case Selected</h3>
+                            <p>Choose a troubleshooting case from the sidebar to inspect logs, rule checks, AI answers,
+                                and human reviews.</p>
+                        </div>
+
+                        <div id="case-content" class="case-detail-content hidden">
+                            <!-- Case Title Banner -->
+                            <div class="case-title-banner">
+                                <div class="title-left">
+                                    <span id="detail-case-id" class="case-badge">Case #1</span>
+                                    <h2 id="detail-symptom">PC cannot obtain IP address</h2>
+                                </div>
+                                <div class="title-right">
+                                    <span id="detail-severity" class="severity-badge-high">High Severity</span>
+                                    <span id="detail-osi" class="osi-badge">Layer 7</span>
+                                </div>
+                            </div>
+
+                            <!-- Case Parameters Layout -->
+                            <div class="case-metadata-grid">
+                                <div class="meta-section">
+                                    <h4>Topology Details</h4>
+                                    <p id="detail-topology">PC connected to access switch VLAN 10</p>
+                                </div>
+                                <div class="meta-section">
+                                    <h4>Device Console / Show Output</h4>
+                                    <pre id="detail-show-output"
+                                        class="console-box">show ip dhcp pool - No DHCP pools configured</pre>
+                                </div>
+                            </div>
+
+                            <!-- Deterministic Rule Checker Checks -->
+                            <div class="checker-section">
+                                <h3>Deterministic Rule Checker Results</h3>
+                                <div id="detail-rule-checks" class="rule-container">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Diagnostic Split Panel: AI vs Human -->
+                            <div class="diagnostic-split">
+                                <!-- AI Assistant Recommendation -->
+                                <div class="diagnostic-card ai-card">
+                                    <div class="card-header">
+                                        <span class="card-badge-ai">Gemini 1.5 Flash</span>
+                                        <h3>AI Diagnostic Verdict</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="field-item">
+                                            <span class="field-label">Likely Root Cause</span>
+                                            <p id="detail-ai-root-cause" class="field-text font-bold">Diagnosing...</p>
+                                        </div>
+                                        <div class="field-item">
+                                            <span class="field-label">Evidence Found in Logs</span>
+                                            <p id="detail-ai-evidence" class="field-text italic">N/A</p>
+                                        </div>
+                                        <div class="field-item">
+                                            <span class="field-label">Next Diagnostic Command</span>
+                                            <code id="detail-ai-next-command"
+                                                class="code-line">show running-config</code>
+                                        </div>
+                                        <div class="field-item">
+                                            <span class="field-label">Recommended Fix Commands</span>
+                                            <pre id="detail-ai-fix" class="code-block">Loading...</pre>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Human Review and Feedback Panel -->
+                                <div class="diagnostic-card human-card">
+                                    <div class="card-header">
+                                        <span class="card-badge-human">Human-in-the-Loop</span>
+                                        <h3>Review Verification</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="review-form">
+                                            <!-- Review Decision Buttons -->
+                                            <div class="form-group">
+                                                <label class="field-label">Verification Status</label>
+                                                <div class="review-status-selectors">
+                                                    <label class="status-btn accept-btn">
+                                                        <input type="radio" name="review-status" value="Accepted">
+                                                        <span class="btn-text">Accept AI Verdict</span>
+                                                    </label>
+                                                    <label class="status-btn edit-btn">
+                                                        <input type="radio" name="review-status" value="Edited">
+                                                        <span class="btn-text">Correct AI Verdict</span>
+                                                    </label>
+                                                    <label class="status-btn reject-btn">
+                                                        <input type="radio" name="review-status" value="Rejected">
+                                                        <span class="btn-text">Reject AI Verdict</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Reviewer Explanation Notes -->
+                                            <div class="form-group">
+                                                <label for="reviewer-notes" class="field-label">Reviewer Explanations /
+                                                    Notes</label>
+                                                <textarea id="reviewer-notes" rows="3"
+                                                    placeholder="Explain why the AI verdict is accepted, corrected, or rejected..."></textarea>
+                                            </div>
+
+                                            <!-- Corrected Fix Steps (Only active when edited/rejected) -->
+                                            <div id="corrected-steps-group" class="form-group hidden">
+                                                <label for="corrected-fix-steps" class="field-label">Corrected Cisco CLI
+                                                    Commands</label>
+                                                <textarea id="corrected-fix-steps" rows="5" class="code-area"
+                                                    placeholder="Enter corrected configuration commands here..."></textarea>
+                                            </div>
+
+                                            <!-- Submit Action Button -->
+                                            <button type="submit" class="submit-btn">Save Review Decision</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- TAB 3: RESPONSIBLE AI LOG -->
+            <section id="tab-responsible-log" class="tab-pane">
+                <div class="responsible-log-container">
+                    <div class="log-intro">
+                        <h2>Responsible AI & Correction Log</h2>
+                        <p>This audit trail shows all network cases where the artificial intelligence model's diagnoses
+                            were corrected or rejected by a human network engineer. This ensures oversight,
+                            verification, and safety before applying changes to live environments.</p>
+                    </div>
+
+                    <div id="corrections-list" class="corrections-grid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>

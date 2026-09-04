@@ -1,0 +1,673 @@
+[
+    {
+        "case_id": 1,
+        "symptom": "PC cannot obtain IP",
+        "topology_note": "PC connected to access switch VLAN10",
+        "show_output": "show ip dhcp pool - No DHCP pools configured",
+        "expected_fault": "DHCP Misconfiguration",
+        "osi_layer": "Layer 7",
+        "concept": "DHCP",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DHCP service is misconfigured; there is no DHCP IP pool configured on the local switch/router to serve clients in VLAN 10.",
+            "confidence": "High",
+            "evidence": "show ip dhcp pool - No DHCP pools configured",
+            "next_command": "show ip dhcp pool",
+            "fix_steps": "Configure the DHCP pool for the subnet:\n1. Router(config)# ip dhcp pool VLAN10\n2. Router(dhcp-config)# network 192.168.10.0 255.255.255.0\n3. Router(dhcp-config)# default-router 192.168.10.1\n4. Router(dhcp-config)# dns-server 8.8.8.8"
+        }
+    },
+    {
+        "case_id": 2,
+        "symptom": "PC gets APIPA address",
+        "topology_note": "DHCP server on Router1",
+        "show_output": "show ip dhcp binding - No bindings",
+        "expected_fault": "DHCP Server Down",
+        "osi_layer": "Layer 7",
+        "concept": "DHCP",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DHCP server on Router1 is down or inactive, causing clients to fallback to APIPA (169.254.x.x) addresses.",
+            "confidence": "High",
+            "evidence": "show ip dhcp binding - No bindings",
+            "next_command": "show ip interface brief",
+            "fix_steps": "Enable the DHCP server service and verify interface connectivity:\n1. Router1(config)# service dhcp\n2. Router1(config)# interface gig0/0\n3. Router1(config-if)# no shutdown"
+        }
+    },
+    {
+        "case_id": 3,
+        "symptom": "Only some hosts receive IPs",
+        "topology_note": "50 PCs in VLAN20",
+        "show_output": "show ip dhcp pool - Leased addresses 50/50",
+        "expected_fault": "DHCP Pool Exhausted",
+        "osi_layer": "Layer 7",
+        "concept": "DHCP",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DHCP pool for VLAN 20 is exhausted as the number of leases has reached the maximum pool size of 50.",
+            "confidence": "High",
+            "evidence": "show ip dhcp pool - Leased addresses 50/50",
+            "next_command": "show ip dhcp pool",
+            "fix_steps": "Expand the DHCP network pool range or clear expired bindings:\n1. Router(config)# ip dhcp pool VLAN20\n2. Router(dhcp-config)# network 192.168.20.0 255.255.255.0\n3. Router(config)# clear ip dhcp binding *"
+        }
+    },
+    {
+        "case_id": 4,
+        "symptom": "Client gets wrong subnet",
+        "topology_note": "DHCP on Router1",
+        "show_output": "show run dhcp - network 192.168.2.0",
+        "expected_fault": "Wrong DHCP Scope",
+        "osi_layer": "Layer 7",
+        "concept": "DHCP",
+        "severity": "Medium",
+        "rule_checks": [
+            {
+                "rule_name": "Subnet Mask Mismatch",
+                "evidence": "Found subnet mask/scope mismatch: '(wrong mask|mask mismatch|subnet mask mismatch|incorrect mask|subnet mismatch|wrong subnet)' in data.",
+                "severity": "Medium"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The DHCP pool configured on Router1 contains a wrong scope network address (192.168.2.0) that doesn't match the client interface VLAN.",
+            "confidence": "High",
+            "evidence": "show run dhcp - network 192.168.2.0",
+            "next_command": "show run | section dhcp",
+            "fix_steps": "Correct the network statement under the DHCP pool config:\n1. Router1(config)# ip dhcp pool CLIENT_POOL\n2. Router1(dhcp-config)# no network 192.168.2.0 255.255.255.0\n3. Router1(dhcp-config)# network 192.168.1.0 255.255.255.0"
+        }
+    },
+    {
+        "case_id": 5,
+        "symptom": "Gateway ping fails after DHCP",
+        "topology_note": "Clients in VLAN30",
+        "show_output": "show run dhcp - wrong default-router",
+        "expected_fault": "Gateway Configuration Error",
+        "osi_layer": "Layer 3",
+        "concept": "DHCP",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Gateway Mismatch",
+                "evidence": "Found default gateway/router mismatch: '(gateway mismatch|wrong default-router|incorrect default-router|incorrect gateway|wrong gateway|gateway configuration error)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The default gateway IP distributed by the DHCP pool configuration on the gateway router is set to an incorrect address.",
+            "confidence": "High",
+            "evidence": "show run dhcp - wrong default-router",
+            "next_command": "show run | section dhcp",
+            "fix_steps": "Modify the default-router IP address in the DHCP pool configuration:\n1. Router(config)# ip dhcp pool VLAN30\n2. Router(dhcp-config)# default-router 192.168.30.1"
+        }
+    },
+    {
+        "case_id": 6,
+        "symptom": "Hosts in same VLAN cannot communicate",
+        "topology_note": "Two PCs on Switch1",
+        "show_output": "show vlan brief - port in VLAN20",
+        "expected_fault": "Wrong VLAN Assignment",
+        "osi_layer": "Layer 2",
+        "concept": "VLAN",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The client access ports are assigned to the wrong VLAN. Communication fails because the two PCs are in separate logical domains on VLAN 20.",
+            "confidence": "High",
+            "evidence": "show vlan brief - port in VLAN20",
+            "next_command": "show interface status",
+            "fix_steps": "Reassign the switch interface to the correct VLAN (e.g. VLAN 10):\n1. Switch1(config)# interface range fa0/1 - 2\n2. Switch1(config-if-range)# switchport mode access\n3. Switch1(config-if-range)# switchport access vlan 10"
+        }
+    },
+    {
+        "case_id": 7,
+        "symptom": "VLAN 30 devices isolated",
+        "topology_note": "Access switch with VLAN30 users",
+        "show_output": "show vlan brief - VLAN30 not found",
+        "expected_fault": "Missing VLAN",
+        "osi_layer": "Layer 2",
+        "concept": "VLAN",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Missing VLAN",
+                "evidence": "Found missing or disabled VLAN: '(missing vlan|vlan.*not found|vlan.*suspended|vlan.*disabled|no trunking|vlan.*not exist)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "VLAN 30 has not been created in the switch VLAN database, causing the switchport configured for VLAN 30 to stay inactive.",
+            "confidence": "High",
+            "evidence": "show vlan brief - VLAN30 not found",
+            "next_command": "show vlan brief",
+            "fix_steps": "Create VLAN 30 in the VLAN database and name it:\n1. Switch(config)# vlan 30\n2. Switch(config-vlan)# name Department_VLAN\n3. Switch(config-vlan)# exit"
+        }
+    },
+    {
+        "case_id": 8,
+        "symptom": "Inter-VLAN communication fails",
+        "topology_note": "Router-on-a-stick topology",
+        "show_output": "show interfaces trunk - no trunking",
+        "expected_fault": "Trunk Configuration Error",
+        "osi_layer": "Layer 2",
+        "concept": "VLAN",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Missing VLAN",
+                "evidence": "Found missing or disabled VLAN: '(missing vlan|vlan.*not found|vlan.*suspended|vlan.*disabled|no trunking|vlan.*not exist)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The inter-switch link between the switches or the router-on-a-stick link lacks active trunk encapsulation (dot1q), blocking VLAN tagging.",
+            "confidence": "High",
+            "evidence": "show interfaces trunk - no trunking",
+            "next_command": "show interfaces trunk",
+            "fix_steps": "Enable 802.1q trunking mode on the connection interface:\n1. Switch(config)# interface gig0/1\n2. Switch(config-if)# switchport trunk encapsulation dot1q\n3. Switch(config-if)# switchport mode trunk"
+        }
+    },
+    {
+        "case_id": 9,
+        "symptom": "Traffic to new VLAN blocked",
+        "topology_note": "Switch trunk between SW1 and SW2",
+        "show_output": "show interfaces trunk - allowed VLANs 10,20",
+        "expected_fault": "Trunk Allowed VLAN Error",
+        "osi_layer": "Layer 2",
+        "concept": "VLAN",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The trunk interface links between Switch1 and Switch2 restrict traffic because VLAN 30 is missing from the list of allowed VLANs.",
+            "confidence": "High",
+            "evidence": "show interfaces trunk - allowed VLANs 10,20",
+            "next_command": "show interfaces trunk",
+            "fix_steps": "Add the missing VLAN to the allowed list on the trunk interfaces:\n1. Switch1(config)# interface gig0/1\n2. Switch1(config-if)# switchport trunk allowed vlan add 30"
+        }
+    },
+    {
+        "case_id": 10,
+        "symptom": "Switch ports inactive",
+        "topology_note": "Department VLAN40",
+        "show_output": "show vlan brief - VLAN40 suspended",
+        "expected_fault": "VLAN Disabled",
+        "osi_layer": "Layer 2",
+        "concept": "VLAN",
+        "severity": "Medium",
+        "rule_checks": [
+            {
+                "rule_name": "Interface Down",
+                "evidence": "Found inactive/down interface indicator: '(interface down|admin.*down|suspended|port inactive|inactive port|ports inactive|shutdown)' in data.",
+                "severity": "High"
+            },
+            {
+                "rule_name": "Missing VLAN",
+                "evidence": "Found missing or disabled VLAN: '(missing vlan|vlan.*not found|vlan.*suspended|vlan.*disabled|no trunking|vlan.*not exist)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "VLAN 40 is in a 'suspended' state on the access switches, which programmatically blocks traffic for all ports assigned to this VLAN.",
+            "confidence": "High",
+            "evidence": "show vlan brief - VLAN40 suspended",
+            "next_command": "show vlan brief",
+            "fix_steps": "Activate the suspended VLAN under global configurations:\n1. Switch(config)# vlan 40\n2. Switch(config-vlan)# state active"
+        }
+    },
+    {
+        "case_id": 11,
+        "symptom": "PC gets IP but cannot reach server",
+        "topology_note": "PC VLAN30 Server VLAN10",
+        "show_output": "show ip route - missing 192.168.30.0 network",
+        "expected_fault": "Missing Route",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The local router does not have a route entry for the destination network (192.168.30.0), causing packets to be dropped.",
+            "confidence": "High",
+            "evidence": "show ip route - missing 192.168.30.0 network",
+            "next_command": "show ip route",
+            "fix_steps": "Add a static route mapping to the target network via the next hop router:\n1. Router(config)# ip route 192.168.30.0 255.255.255.0 192.168.12.2"
+        }
+    },
+    {
+        "case_id": 12,
+        "symptom": "Remote network unreachable",
+        "topology_note": "Two routers connected serially",
+        "show_output": "show ip route - wrong next hop",
+        "expected_fault": "Static Route Misconfiguration",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Missing Route",
+                "evidence": "Found missing routing entry: '(missing route|route not found|no route|gateway of last resort not set|missing default route|network unreachable|unreachable)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The static route to the remote subnet is configured with an incorrect next-hop IP address or interface, leading to routing failures.",
+            "confidence": "High",
+            "evidence": "show ip route - wrong next hop",
+            "next_command": "show ip route static",
+            "fix_steps": "Remove the incorrect static route and configure the correct next-hop address:\n1. Router(config)# no ip route 10.0.0.0 255.255.255.0 192.168.1.5\n2. Router(config)# ip route 10.0.0.0 255.255.255.0 192.168.1.2"
+        }
+    },
+    {
+        "case_id": 13,
+        "symptom": "Packets looping between routers",
+        "topology_note": "Three-router topology",
+        "show_output": "traceroute shows repeating hops",
+        "expected_fault": "Routing Loop",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "A routing loop exists where packets bounce back and forth between two routers due to conflicting static routes.",
+            "confidence": "High",
+            "evidence": "traceroute shows repeating hops",
+            "next_command": "show ip route",
+            "fix_steps": "Verify routing protocols or correct the routing direction settings:\n1. RouterA(config)# no ip route 10.0.0.0 255.0.0.0 10.1.1.2\n2. RouterA(config)# ip route 10.0.0.0 255.0.0.0 10.1.2.2"
+        }
+    },
+    {
+        "case_id": 14,
+        "symptom": "Only local network reachable",
+        "topology_note": "Branch router",
+        "show_output": "show ip route - gateway of last resort not set",
+        "expected_fault": "Missing Default Route",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "Medium",
+        "rule_checks": [
+            {
+                "rule_name": "Missing Route",
+                "evidence": "Found missing routing entry: '(missing route|route not found|no route|gateway of last resort not set|missing default route|network unreachable|unreachable)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The branch gateway router is missing a default route (0.0.0.0/0), so it cannot forward non-local traffic to the corporate head office or internet.",
+            "confidence": "High",
+            "evidence": "show ip route - gateway of last resort not set",
+            "next_command": "show ip route",
+            "fix_steps": "Configure the gateway of last resort (default route) pointing to the ISP router IP:\n1. Router(config)# ip route 0.0.0.0 0.0.0.0 203.0.113.1"
+        }
+    },
+    {
+        "case_id": 15,
+        "symptom": "OSPF neighbors not forming",
+        "topology_note": "R1-R2 OSPF",
+        "show_output": "show ip ospf neighbor - no neighbors",
+        "expected_fault": "OSPF Configuration Error",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "OSPF neighbor adjacencies are not forming. OSPF configuration issues such as mismatched hello/dead intervals, subnets, or area IDs prevent peering.",
+            "confidence": "High",
+            "evidence": "show ip ospf neighbor - no neighbors",
+            "next_command": "show ip ospf interface",
+            "fix_steps": "Verify OSPF network statements and configure correct area settings:\n1. Router(config)# router ospf 1\n2. Router(config-router)# network 192.168.12.0 0.0.0.3 area 0"
+        }
+    },
+    {
+        "case_id": 16,
+        "symptom": "Website unreachable by name",
+        "topology_note": "Client and DNS server",
+        "show_output": "ipconfig/all - DNS server blank",
+        "expected_fault": "DNS Configuration Error",
+        "osi_layer": "Layer 7",
+        "concept": "DNS",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Missing Route",
+                "evidence": "Found missing routing entry: '(missing route|route not found|no route|gateway of last resort not set|missing default route|network unreachable|unreachable)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The DNS server IP address is missing or blank on the client workstation config, meaning client cannot resolve domains to IPs.",
+            "confidence": "High",
+            "evidence": "ipconfig/all - DNS server blank",
+            "next_command": "show run | section dhcp",
+            "fix_steps": "Add the DNS server address to the local network's DHCP pool scope:\n1. Router(config)# ip dhcp pool LAN_POOL\n2. Router(dhcp-config)# dns-server 192.168.10.5"
+        }
+    },
+    {
+        "case_id": 17,
+        "symptom": "DNS queries timeout",
+        "topology_note": "Enterprise DNS server",
+        "show_output": "nslookup timeout",
+        "expected_fault": "DNS Service Failure",
+        "osi_layer": "Layer 7",
+        "concept": "DNS",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DNS query timed out because the destination DNS server process is stopped, blocked, or unreachable.",
+            "confidence": "High",
+            "evidence": "nslookup timeout",
+            "next_command": "ping 192.168.10.5",
+            "fix_steps": "Restart the DNS daemon on the server and check network firewalls/routing for port 53 (UDP/TCP)."
+        }
+    },
+    {
+        "case_id": 18,
+        "symptom": "Wrong website opens",
+        "topology_note": "Web and DNS servers",
+        "show_output": "nslookup returns wrong IP",
+        "expected_fault": "Incorrect DNS Entry",
+        "osi_layer": "Layer 7",
+        "concept": "DNS",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DNS zone database contains an incorrect A-record pointing to a deprecated or wrong IP address.",
+            "confidence": "High",
+            "evidence": "nslookup returns wrong IP",
+            "next_command": "show ip dns view",
+            "fix_steps": "Update the host resource record (A Record) in the DNS zone configuration:\n1. Router(config)# ip dns server\n2. Router(config)# no ip host server.local 192.168.1.99\n3. Router(config)# ip host server.local 192.168.1.10"
+        }
+    },
+    {
+        "case_id": 19,
+        "symptom": "Some domains resolve",
+        "topology_note": "Multiple DNS zones",
+        "show_output": "show dns statistics - zone load errors",
+        "expected_fault": "DNS Zone Error",
+        "osi_layer": "Layer 7",
+        "concept": "DNS",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The DNS server fails to resolve external or internal domains because of load errors or missing domain authority zone configurations.",
+            "confidence": "High",
+            "evidence": "show dns statistics - zone load errors",
+            "next_command": "show running-config | include dns",
+            "fix_steps": "Reload the zone database and fix file permissions in the DNS database configuration folder."
+        }
+    },
+    {
+        "case_id": 20,
+        "symptom": "Internal names fail",
+        "topology_note": "DNS forwarding enabled",
+        "show_output": "show run - wrong forwarder IP",
+        "expected_fault": "DNS Forwarder Error",
+        "osi_layer": "Layer 7",
+        "concept": "DNS",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The local DNS server fails external name queries because its OOB DNS forwarder is pointing to a wrong, unreachable IP address.",
+            "confidence": "High",
+            "evidence": "show run - wrong forwarder IP",
+            "next_command": "show run | include forwarder",
+            "fix_steps": "Correct the forwarder target IP address configuration:\n1. Router(config)# no ip dns server forwarder 10.0.0.99\n2. Router(config)# ip dns server forwarder 8.8.8.8"
+        }
+    },
+    {
+        "case_id": 21,
+        "symptom": "Server inaccessible from branch",
+        "topology_note": "ACL on edge router",
+        "show_output": "show access-lists deny ip any host",
+        "expected_fault": "ACL Blocking Traffic",
+        "osi_layer": "Layer 4",
+        "concept": "ACL",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "An Access Control List (ACL) applied to the edge/branch router explicitly denies traffic heading to the corporate server host.",
+            "confidence": "High",
+            "evidence": "show access-lists deny ip any host",
+            "next_command": "show ip interface brief",
+            "fix_steps": "Modify the ACL to permit traffic from the client subnet to the target server:\n1. Router(config)# ip access-list extended BRANCH_ACL\n2. Router(config-ext-nacl)# 5 permit ip 192.168.10.0 0.0.0.255 host 10.1.1.10"
+        }
+    },
+    {
+        "case_id": 22,
+        "symptom": "Only HTTP blocked",
+        "topology_note": "Web server network",
+        "show_output": "show access-lists deny tcp eq 80",
+        "expected_fault": "Incorrect ACL Rule",
+        "osi_layer": "Layer 4",
+        "concept": "ACL",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "An ACL configuration is misconfigured, specifically blocking TCP port 80 (HTTP) traffic which breaks website services.",
+            "confidence": "High",
+            "evidence": "show access-lists deny tcp eq 80",
+            "next_command": "show access-lists",
+            "fix_steps": "Remove the blocking TCP port 80 statement from the ACL:\n1. Router(config)# ip access-list extended Web_Filter\n2. Router(config-ext-nacl)# no deny tcp any any eq 80\n3. Router(config-ext-nacl)# permit tcp any any eq 80"
+        }
+    },
+    {
+        "case_id": 23,
+        "symptom": "All traffic blocked",
+        "topology_note": "Router inbound ACL",
+        "show_output": "show access-lists implicit deny",
+        "expected_fault": "ACL Implicit Deny",
+        "osi_layer": "Layer 4",
+        "concept": "ACL",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The traffic is dropped at the inbound router interface due to the ACL's implicit deny all rule at the end of the access list.",
+            "confidence": "High",
+            "evidence": "show access-lists implicit deny",
+            "next_command": "show access-lists",
+            "fix_steps": "Add a permit statement at the end of the ACL to allow other traffic:\n1. Router(config)# ip access-list extended SECURITY_ACL\n2. Router(config-ext-nacl)# permit ip any any"
+        }
+    },
+    {
+        "case_id": 24,
+        "symptom": "Ping blocked unexpectedly",
+        "topology_note": "WAN edge router",
+        "show_output": "show access-lists deny icmp",
+        "expected_fault": "ACL ICMP Restriction",
+        "osi_layer": "Layer 4",
+        "concept": "ACL",
+        "severity": "Low",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "Ping/ICMP requests are blocked by an edge firewall rule, though other higher layer application services remain active.",
+            "confidence": "High",
+            "evidence": "show access-lists deny icmp",
+            "next_command": "show access-lists",
+            "fix_steps": "Permit ICMP echo requests through the ACL to enable reachability testing:\n1. Router(config)# ip access-list extended WAN_ACL\n2. Router(config-ext-nacl)# permit icmp any any echo"
+        }
+    },
+    {
+        "case_id": 25,
+        "symptom": "Internet access unavailable",
+        "topology_note": "Inside and outside interfaces",
+        "show_output": "show ip nat statistics - translations 0",
+        "expected_fault": "Missing NAT",
+        "osi_layer": "Layer 3",
+        "concept": "NAT",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "Network Address Translation (NAT) is missing; private IP packets are sent directly to the public internet where they are dropped.",
+            "confidence": "High",
+            "evidence": "show ip nat statistics - translations 0",
+            "next_command": "show ip nat statistics",
+            "fix_steps": "Define inside/outside translation rules and configure overload NAT:\n1. Router(config)# interface gig0/0\n2. Router(config-if)# ip nat inside\n3. Router(config)# interface gig0/1\n4. Router(config-if)# ip nat outside\n5. Router(config)# ip nat inside source list 1 interface gig0/1 overload"
+        }
+    },
+    {
+        "case_id": 26,
+        "symptom": "Only one host accesses internet",
+        "topology_note": "PAT configured",
+        "show_output": "show run - wrong overload interface",
+        "expected_fault": "PAT Configuration Error",
+        "osi_layer": "Layer 3",
+        "concept": "NAT",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "Port Address Translation (PAT) is configured, but the NAT overload rule binds to the wrong output interface.",
+            "confidence": "High",
+            "evidence": "show run - wrong overload interface",
+            "next_command": "show run | include ip nat inside source",
+            "fix_steps": "Correct the NAT overload statement to bind to the active WAN interface:\n1. Router(config)# no ip nat inside source list 1 interface serial0/0/0 overload\n2. Router(config)# ip nat inside source list 1 interface gig0/1 overload"
+        }
+    },
+    {
+        "case_id": 27,
+        "symptom": "External users cannot access server",
+        "topology_note": "Public web server",
+        "show_output": "show ip nat translations - no static entry",
+        "expected_fault": "Missing Static NAT",
+        "osi_layer": "Layer 3",
+        "concept": "NAT",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The static NAT rule mapping external requests on port 80 to the internal corporate server is missing from the translation table.",
+            "confidence": "High",
+            "evidence": "show ip nat translations - no static entry",
+            "next_command": "show ip nat translations",
+            "fix_steps": "Add a static NAT translation statement for the server:\n1. Router(config)# ip nat inside source static tcp 192.168.10.100 80 203.0.113.100 80"
+        }
+    },
+    {
+        "case_id": 28,
+        "symptom": "Translation table empty",
+        "topology_note": "NAT ACL configured",
+        "show_output": "ACL does not match subnet",
+        "expected_fault": "NAT ACL Error",
+        "osi_layer": "Layer 3",
+        "concept": "NAT",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The ACL referenced in the inside source NAT rule does not include the local subnet address range, preventing translation.",
+            "confidence": "High",
+            "evidence": "ACL does not match subnet",
+            "next_command": "show access-lists",
+            "fix_steps": "Modify the NAT ACL (e.g. ACL 1) to match the internal LAN IP subnet:\n1. Router(config)# access-list 1 permit 192.168.10.0 0.0.0.255"
+        }
+    },
+    {
+        "case_id": 29,
+        "symptom": "Guest Wi\u2011Fi cannot connect",
+        "topology_note": "Wireless LAN with WPA2",
+        "show_output": "Client authentication failed",
+        "expected_fault": "Wireless Authentication Error",
+        "osi_layer": "Layer 2",
+        "concept": "Wireless",
+        "severity": "Medium",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "Clients fail to authenticate to the access point because of mismatched WPA2 pre-shared keys (PSK) or credentials.",
+            "confidence": "Medium",
+            "evidence": "Client authentication failed",
+            "next_command": "show dot11 associations",
+            "fix_steps": "Check client passphrase or re-enter the correct SSID credentials on the WAP:\n1. WAP(config)# interface dot11Radio 0\n2. WAP(config-if-ssid)# wpa-psk ascii 7 your_passphrase"
+        }
+    },
+    {
+        "case_id": 30,
+        "symptom": "Guest Wi\u2011Fi reaches internal servers",
+        "topology_note": "Guest and internal VLANs",
+        "show_output": "No guest isolation",
+        "expected_fault": "Wireless Security Misconfiguration",
+        "osi_layer": "Layer 2",
+        "concept": "Wireless",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "Guest Wi-Fi network isolation is not configured. Guest traffic can traverse the corporate VLAN switchports.",
+            "confidence": "High",
+            "evidence": "No guest isolation",
+            "next_command": "show running-config interface dot11Radio 0",
+            "fix_steps": "Assign the Guest SSID to a separate VLAN and apply ACLs on the core switches:\n1. WAP(config-if-ssid)# vlan 50\n2. WAP(config-if-ssid)# exit"
+        }
+    },
+    {
+        "case_id": 31,
+        "symptom": "PC cannot reach default gateway",
+        "topology_note": "Single VLAN network",
+        "show_output": "ping 192.168.1.1 failed",
+        "expected_fault": "Gateway Misconfiguration",
+        "osi_layer": "Layer 3",
+        "concept": "Gateway",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The host default gateway address is misconfigured or points to an inactive/incorrect IP on the local router subnet.",
+            "confidence": "High",
+            "evidence": "ping 192.168.1.1 failed",
+            "next_command": "show ip interface brief",
+            "fix_steps": "Verify and correct the default gateway IP on the host configuration or the router interface:\n1. Router(config)# interface gig0/0\n2. Router(config-if)# ip address 192.168.1.1 255.255.255.0\n3. Router(config-if)# no shutdown"
+        }
+    },
+    {
+        "case_id": 32,
+        "symptom": "Router interfaces show down",
+        "topology_note": "Two-router topology",
+        "show_output": "show ip interface brief - administratively down",
+        "expected_fault": "Interface Shutdown",
+        "osi_layer": "Layer 1",
+        "concept": "Interface",
+        "severity": "High",
+        "rule_checks": [
+            {
+                "rule_name": "Interface Down",
+                "evidence": "Found inactive/down interface indicator: '(interface down|admin.*down|suspended|port inactive|inactive port|ports inactive|shutdown)' in data.",
+                "severity": "High"
+            }
+        ],
+        "ai_diagnosis": {
+            "root_cause": "The physical connection interfaces on the router are administratively disabled (shutdown state).",
+            "confidence": "High",
+            "evidence": "show ip interface brief - administratively down",
+            "next_command": "show running-config interface",
+            "fix_steps": "Enable the router interfaces using the 'no shutdown' command:\n1. Router(config)# interface range gig0/0 - 1\n2. Router(config-if-range)# no shutdown"
+        }
+    },
+    {
+        "case_id": 33,
+        "symptom": "Hosts cannot access internet after NAT setup",
+        "topology_note": "Edge router with ISP connection",
+        "show_output": "show ip nat statistics - outside interface missing",
+        "expected_fault": "NAT Interface Misconfiguration",
+        "osi_layer": "Layer 3",
+        "concept": "NAT",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "NAT translation is failing because the outside NAT interface (WAN interface) is not designated, preventing inside-to-outside address translation.",
+            "confidence": "High",
+            "evidence": "show ip nat statistics - outside interface missing",
+            "next_command": "show running-config | include ip nat",
+            "fix_steps": "Configure the outside NAT interface on the edge router:\n1. Router(config)# interface gig0/1\n2. Router(config-if)# ip nat outside"
+        }
+    },
+    {
+        "case_id": 34,
+        "symptom": "PC can ping gateway but not remote network",
+        "topology_note": "Multi-router topology",
+        "show_output": "show ip route - destination network missing",
+        "expected_fault": "Missing Route",
+        "osi_layer": "Layer 3",
+        "concept": "Routing",
+        "severity": "High",
+        "rule_checks": [],
+        "ai_diagnosis": {
+            "root_cause": "The local router does not have a route entry for the destination network (192.168.30.0), causing packets to be dropped.",
+            "confidence": "High",
+            "evidence": "show ip route - missing 192.168.30.0 network",
+            "next_command": "show ip route",
+            "fix_steps": "Add a static route mapping to the target network via the next hop router:\n1. Router(config)# ip route 192.168.30.0 255.255.255.0 192.168.12.2"
+        }
+    }
+]
